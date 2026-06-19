@@ -79,24 +79,23 @@ def fetch_stream_link(item):
         def check_network(request):
             url = request.url
             if "tvcdnpotok.com" in url and ".m3u8" in url:
-                # Regex extracts everything up to '.m3u8' dropping URL arguments
-                match = re.search(r'(https://tvcdnpotok\.com/.*?\.m3u8)', url)
-                if match:
-                    clean_url = match.group(1)
-                    
-                    # VALIDATION: Check if this is the full token link. 
-                    # The short broken link has 4 slashes: https: // tvcdnpotok.com / 46 / index.m3u8
-                    # The full working link has 6 slashes: https: // tvcdnpotok.com / TOKEN / 46 / TIMESTAMP / index.m3u8
-                    if clean_url.count("/") >= 6:
-                        state["found_link"] = clean_url
-                        print(f"[FOUND LINK NOW] {display_name} -> {clean_url}")
+                # FIX: We split by '?' to completely remove web tokens/arguments,
+                # but we keep the ENTIRE rest of the URL path structure intact.
+                clean_url = url.split("?")[0]
+                
+                # VALIDATION: Check if this is the full token link with deep folder structure. 
+                # Long working links must have 6 or more slashes.
+                if clean_url.count("/") >= 6:
+                    # Overwrite continuously so we always grab the last, most deep sub-playlist (.m3u8) request
+                    state["found_link"] = clean_url
+                    print(f"[FOUND LINK NOW] {display_name} -> {clean_url}")
 
         page.on("request", check_network)
 
         try:
             print(f"[START] Processing: {display_name}")
             page.goto(full_url, timeout=20000)
-            page.wait_for_timeout(5000)  # Slightly increased to give the stream player time to resolve tokens
+            page.wait_for_timeout(6000)  # Increased slightly to give the player time to request sub-tracks/resolutions
             
             if state["found_link"]:
                 entry = (
