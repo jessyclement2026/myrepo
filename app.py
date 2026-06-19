@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from playwright.sync_api import sync_playwright
 
 # Defining the base URL structure
-BASE_URL = "https://hotelki.tv/"
+BASE_URL = "https://hotelki.tv"
 
 # Clean list containing only the target page names
 pages = [
@@ -66,7 +66,7 @@ def fetch_stream_link(item):
     full_url = f"{BASE_URL}{item}"
     display_name = format_title(item)
     logo_base = os.path.splitext(item)[0] 
-    full_logo_url = f"{BASE_URL}{logo_base}.png"
+    full_logo_url = f"{BASE_URL}images/{logo_base}.png"
     
     with sync_playwright() as p:
         browser = p.firefox.launch(headless=True)
@@ -74,30 +74,29 @@ def fetch_stream_link(item):
         
         state = {"found_link": None}
 
-        # Custom inline handler to catch tokenless paths
+        # Inline handler targeting the required m3u8 token structure
         def check_network(request):
             url = request.url
-            if ".m3u8" in url and "tvcdnpotok.com" in url:
-                # FIXED: Added [0] to extract the clean URL string value out of the split array
-                clean_path = url.split("?")[0]
-                state["found_link"] = clean_path
+            if ".m3u8" in url and "wmsAuthSign=" in url:
+                state["found_link"] = url
 
         page.on("request", check_network)
 
         try:
             print(f"[START] Processing: {display_name}")
             page.goto(full_url, timeout=20000)
-            page.wait_for_timeout(4000)
+            page.wait_for_timeout(4000)  # Wait for player to load and request token
             
             if state["found_link"]:
-                print(f"[SUCCESS] Found clean link for {display_name}")
+                print(f"[SUCCESS] Found verified token link for {display_name}")
+                # Formats the entry cleanly as a pure string (no brackets or split arrays)
                 entry = (
                     f'#EXTINF:-1 tvg-id="" tvg-name="{display_name}" tvg-language="English" '
                     f'tvg-logo="{full_logo_url}" group-title="XXX",{display_name}\n{state["found_link"]}'
                 )
                 return entry
             else:
-                print(f"[FAILED] No stream link matched for {display_name}")
+                print(f"[FAILED] No token link found for {display_name}")
                 return None
 
         except Exception as e:
@@ -124,7 +123,7 @@ def main():
         f.write("#EXTM3U\n")
         f.write("\n".join(playlist_entries))
 
-    print(f"\nFinished! Compiled {len(playlist_entries)} clean paths inside playlist.m3u.")
+    print(f"\nFinished! Compiled {len(playlist_entries)} token links inside playlist.m3u.")
 
 if __name__ == "__main__":
     main()
