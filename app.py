@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from playwright.sync_api import sync_playwright
 
 # Defining the base URL structure
-BASE_URL = "https://hotelki.tv"
+BASE_URL = "https://hotelki.tv/"
 
 # Clean list containing only the target page names
 pages = [
