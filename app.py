@@ -74,11 +74,11 @@ def fetch_stream_link(item):
         
         state = {"found_link": None}
 
-        # MODIFIED: Custom inline handler to catch tokenless paths
+        # Custom inline handler to catch tokenless paths
         def check_network(request):
             url = request.url
             if ".m3u8" in url and "tvcdnpotok.com" in url:
-                # If a token parameter exists, split it off to keep only the clean path
+                # FIXED: Added [0] to extract the clean URL string value out of the split array
                 clean_path = url.split("?")[0]
                 state["found_link"] = clean_path
 
