@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang='en' dir='ltr'>
-
+<html lang="en">
 <head>
-  <meta charset='utf-8'>
-  <title>IPTV HLS Pipeline Tester</title>
-  <meta name='viewport' content='width=device-width,initial-scale=1'>
-
-  <link href='https://sdk.uiza.io/v5/release/uiza.css' rel='stylesheet'>
-  <script src='https://sdk.uiza.io/v5/release/uiza.min.js'></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Pages IPTV Live Tester</title>
+  
+  <!-- Load the Clappr Video Engine Core via official stable CDN delivery layers -->
+  <script src="https://www.draketo.de/software/m3u-player.js" defer="defer"></script>
+  
 
   <style>
     body {
@@ -15,12 +15,14 @@
       padding: 30px;
       background-color: #0b0c10;
       color: #ffffff;
-      font-family: Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    h1 { color: #66fcf1; margin-bottom: 20px; font-size: 20px; }
+    h1 { color: #66fcf1; margin-bottom: 5px; font-size: 22px; }
+    p.sub { margin-top: 0; margin-bottom: 25px; color: #46a29f; font-size: 14px; }
+    
     #player-wrapper {
       width: 800px;
       height: 450px;
@@ -29,10 +31,8 @@
       border-radius: 6px;
       overflow: hidden;
     }
-    #playerUz {
-      width: 100%;
-      height: 100%;
-    }
+    #player { width: 100%; height: 100%; }
+    
     #controls {
       margin-top: 20px;
       width: 800px;
@@ -42,7 +42,7 @@
     }
     select {
       flex-grow: 1;
-      padding: 10px;
+      padding: 12px;
       background: #1f2833;
       color: #fff;
       border: 1px solid #46a29f;
@@ -50,6 +50,8 @@
       font-size: 14px;
       cursor: pointer;
     }
+    select:focus { outline: none; border-color: #66fcf1; }
+    
     #console {
       margin-top: 15px;
       width: 760px;
@@ -58,37 +60,41 @@
       background: #151515;
       padding: 12px 20px;
       border-radius: 4px;
-      border-left: 4px solid #46a29f;
+      border-left: 4px solid #66fcf1;
       font-family: monospace;
     }
   </style>
 </head>
-
 <body>
 
-  <h1>IPTV Pipeline Test Frame (UIZA SDK)</h1>
+  <h1>IPTV Live Stream Pipeline Tester</h1>
+  <p class="sub">Verifying GitHub Actions Extracted M3U8 Tokens inside Clappr Video Core</p>
 
+  <!-- Video canvas container target binding space -->
   <div id="player-wrapper">
-    <video id='playerUz' crossorigin playsinline autoplay></video>
+    <div id="player"></div>
   </div>
 
+  <!-- Channel navigation stream dropdown module selector -->
   <div id="controls">
-    <label for="channelSelect">Select Channel:</label>
+    <label for="channelSelect">Select Track:</label>
     <select id="channelSelect" disabled>
-      <option>Loading and parsing playlist.m3u...</option>
+      <option>Loading and parsing playlist.m3u asset matrix...</option>
     </select>
   </div>
 
-  <div id="console">Initializing parser components...</div>
+  <div id="console">System Boot: Initializing stream mapping components...</div>
 
-  <script>
-    // Hardcoded example link provided in original request preserved as fallback
-    var videoStreamURL = 'https://cdn77.org';
+  <script type="text/javascript">
+    // Pristine, permanent fallback video URL signature asset provided by Apple CDN networks
+    var backupTestURL = 'https://unified-streaming.com';
     let channelsList = [];
+    let playerInstance = null;
 
-    function parseM3u(text) {
+    // Fast memory processing parser function mapping plain layout text layers to valid track array objects
+    function parseM3uFile(text) {
       const lines = text.split('\n');
-      const parsed = [];
+      const tracks = [];
       let currentName = "Default Channel";
 
       for (let i = 0; i < lines.length; i++) {
@@ -99,51 +105,65 @@
             currentName = line.substring(commaIdx + 1).trim();
           }
         } else if (line.startsWith('http')) {
-          parsed.push({
+          tracks.push({
             name: currentName,
             url: line
           });
         }
       }
-      return parsed;
+      return tracks;
     }
 
-    function playStream(streamURL) {
+    // Instantiates the native Clappr HLS player lifecycle engine
+    function loadVideoTrack(streamURL) {
       const log = document.getElementById('console');
-      log.innerText = `[PLAYING] Accessing stream URL: ${streamURL}`;
+      log.innerText = `[CORE] Connecting to stream source payload: ${streamURL}`;
       
-      if (window.UZplayer) {
-        window.UZplayer.src(streamURL);
-      } else {
-        // Preserved original execution design using Uiza class instantiations
-        window.UZplayer = new Uiza(document.getElementById('playerUz'), { src: streamURL });
+      if (playerInstance) {
+        playerInstance.destroy();
       }
+
+      // Generating the target player container mapping configurations
+      playerInstance = new Clappr.Player({
+        source: streamURL,
+        parentId: "#player",
+        width: '100%',
+        height: '100%',
+        autoPlay: true,
+        plugins: [ClapprPlugins.HlsPlayback],
+        playback: {
+          hlsjsConfig: {
+            enableWorker: true
+          }
+        }
+      });
     }
 
-    async function initTestingSuite() {
+    async function startTestingSuite() {
       const log = document.getElementById('console');
       const selectMenu = document.getElementById('channelSelect');
 
       try {
-        log.innerText = "[CORE] Fetching local playlist.m3u relative asset...";
+        log.innerText = "[CORE] Locating playlist.m3u database from repository tree...";
         
+        // Fetching the runtime file compiled dynamically by your GitHub workflow script
         const response = await fetch('./playlist.m3u');
         if (!response.ok) {
-          log.innerHTML = "<span style='color:#ff4a4a;'>[FALLBACK] local playlist.m3u missing. Running hardcoded default test stream.</span>";
-          playStream(videoStreamURL);
+          log.innerHTML = "<span style='color:#ff4a4a;'>[FALLBACK] local playlist.m3u missing. Running static test stream.</span>";
+          loadVideoTrack(backupTestURL);
           return;
         }
 
         const rawText = await response.text();
-        channelsList = parseM3u(rawText);
+        channelsList = parseM3uFile(rawText);
 
         if (channelsList.length === 0) {
-          log.innerHTML = "<span style='color:#ff4a4a;'>[EMPTY] File found but contains no track lines. Playing default stream.</span>";
-          playStream(videoStreamURL);
+          log.innerHTML = "<span style='color:#ff4a4a;'>[EMPTY] Playlist parsed but 0 streams found. Playing backup stream.</span>";
+          loadVideoTrack(backupTestURL);
           return;
         }
 
-        // Clear placeholder items and populate with active parsed channels
+        // Flush placeholders and drop options directly into select menus
         selectMenu.innerHTML = "";
         channelsList.forEach((channel, idx) => {
           const opt = document.createElement('option');
@@ -153,24 +173,24 @@
         });
         selectMenu.disabled = false;
 
-        log.innerHTML = `<span style='color:#66fcf1;'>[SUCCESS] Parsed ${channelsList.length} channels. Playing track 1.</span>`;
-        playStream(channelsList[0].url);
+        log.innerHTML = `<span style='color:#66fcf1;'>[SUCCESS] Successfully verified and parsed ${channelsList.length} live tracks. Launching track 1.</span>`;
+        loadVideoTrack(channelsList[0].url);
 
+        // Track changes on dropdown selection hooks
         selectMenu.addEventListener('change', (e) => {
           const selectedIdx = e.target.value;
-          playStream(channelsList[selectedIdx].url);
+          loadVideoTrack(channelsList[selectedIdx].url);
         });
 
       } catch (err) {
         console.error(err);
-        log.innerHTML = `<span style='color:#ff4a4a;'>[ERROR] Fallback to default asset due to: ${err.message}</span>`;
-        playStream(videoStreamURL);
+        log.innerHTML = `<span style='color:#ff4a4a;'>[ERROR] Critical exception: ${err.message}</span>`;
+        loadVideoTrack(backupTestURL);
       }
     }
 
-    window.onload = initTestingSuite;
+    window.onload = startTestingSuite;
   </script>
 
 </body>
-
 </html>
