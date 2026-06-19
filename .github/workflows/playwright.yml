@@ -7,6 +7,7 @@ on:
     # Runs automatically every 30 minutes
     - cron: '*/30 * * * *'
   workflow_dispatch:
+    # Allows you to manually click "Run workflow" inside GitHub
 
 permissions:
   contents: write
@@ -37,13 +38,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y ffmpeg ubuntu-restricted-extras xvfb
 
-    - name: Run Scraper Script with Virtual Framebuffer
+    - name: Run Scraper Script with Virtual Display Framebuffer
       run: |
         xvfb-run --server-args="-screen 0 1920x1080x24" python app.py
 
     - name: Commit and Push Updated Playlist to Main
       run: |
         git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@://github.com"
-        git add playlist.m3u
-        git diff-index --quiet HEAD || (git commit -m "Automated token update" && git push)
+        git config --global user.email "41898282+github-actions[bot]@://
