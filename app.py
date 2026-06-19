@@ -46,13 +46,9 @@ pages = [
 
 def format_title(raw_filename):
     """Converts 'hustler-hd.html' to 'Hustler HD'"""
-    # 1. Strip the extension (.html) and grab the string at index 0
     base_name = os.path.splitext(raw_filename)[0]
-    
-    # 2. Replace hyphens with spaces and capitalize each separate word
     clean_name = base_name.replace("-", " ").title()
     
-    # 3. Clean up common acronyms to keep them fully uppercase
     replacements = {
         " Hd": " HD",
         " Tv": " TV",
@@ -68,46 +64,40 @@ def format_title(raw_filename):
 def fetch_stream_link(item):
     """Worker function executed by each thread to fetch a single stream link."""
     full_url = f"{BASE_URL}{item}"
-    
-    # 1. Beautiful uppercase text for names
     display_name = format_title(item)
-    
-    # 2. Clean lowercase string with dashes (e.g., 'hustler-hd')
     logo_base = os.path.splitext(item)[0] 
+    full_logo_url = f"{BASE_URL}{logo_base}.png"
     
-    # 3. Form the absolute URL for the logo pointing to the .png asset
-    full_logo_url = f"{BASE_URL}images/{logo_base}.png"
-    
-    # Each thread needs its own Playwright context manager
     with sync_playwright() as p:
         browser = p.firefox.launch(headless=True)
         page = browser.new_page()
         
         state = {"found_link": None}
 
-        # Inline handler targeting the required m3u8 token structure
+        # MODIFIED: Custom inline handler to catch tokenless paths
         def check_network(request):
             url = request.url
-            if ".m3u8" in url and "wmsAuthSign=" in url:
-                state["found_link"] = url
+            if ".m3u8" in url and "tvcdnpotok.com" in url:
+                # If a token parameter exists, split it off to keep only the clean path
+                clean_path = url.split("?")[0]
+                state["found_link"] = clean_path
 
         page.on("request", check_network)
 
         try:
             print(f"[START] Processing: {display_name}")
             page.goto(full_url, timeout=20000)
-            page.wait_for_timeout(4000)  # Wait for player to load and request token
+            page.wait_for_timeout(4000)
             
             if state["found_link"]:
-                print(f"[SUCCESS] Found link for {display_name}")
-                # Format block using display_name for text labels and full_logo_url for the logo path
+                print(f"[SUCCESS] Found clean link for {display_name}")
                 entry = (
                     f'#EXTINF:-1 tvg-id="" tvg-name="{display_name}" tvg-language="English" '
                     f'tvg-logo="{full_logo_url}" group-title="XXX",{display_name}\n{state["found_link"]}'
                 )
                 return entry
             else:
-                print(f"[FAILED] No token link found for {display_name}")
+                print(f"[FAILED] No stream link matched for {display_name}")
                 return None
 
         except Exception as e:
@@ -118,28 +108,23 @@ def fetch_stream_link(item):
 
 def main():
     playlist_entries = []
-    
-    # Max parallel browser instances running at the same time
     MAX_WORKERS = 5 
     
     print(f"Starting parallel execution with {MAX_WORKERS} workers...")
     
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        # Submit all tasks to the thread pool
         futures = {executor.submit(fetch_stream_link, item): item for item in pages}
         
-        # Collect results as they finish
         for future in as_completed(futures):
             result = future.result()
             if result:
                 playlist_entries.append(result)
 
-    # Save complete file block context
     with open("playlist.m3u", "w", encoding="utf-8") as f:
         f.write("#EXTM3U\n")
         f.write("\n".join(playlist_entries))
 
-    print(f"\nFinished! Compiled {len(playlist_entries)} links inside playlist.m3u.")
+    print(f"\nFinished! Compiled {len(playlist_entries)} clean paths inside playlist.m3u.")
 
 if __name__ == "__main__":
     main()
