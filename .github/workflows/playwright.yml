@@ -4,10 +4,9 @@ on:
   push:
     branches: [ main, master ]
   schedule:
-    # Runs automatically every 6 hours to update tokens
-    - cron: '0 */6 * * *'
+    # Изпълнява се автоматично на всеки 5 минути
+    - cron: '*/5 * * * *'
   workflow_dispatch:
-    # Allows you to manually click "Run workflow" inside GitHub
 
 permissions:
   contents: write
@@ -34,7 +33,6 @@ jobs:
       run: playwright install firefox --with-deps
 
     - name: Run Scraper Script
-      # Adjust "app.py" if your script file has a different name
       run: python app.py
 
     - name: Commit and Push Updated Playlist to Main
@@ -42,5 +40,4 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git add playlist.m3u
-        # Only commits and pushes if tokens have actually changed
         git diff-index --quiet HEAD || (git commit -m "Automated token update" && git push)
