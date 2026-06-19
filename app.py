@@ -98,9 +98,12 @@ def fetch_stream_link(item):
             page.wait_for_timeout(6000)  # Increased slightly to give the player time to request sub-tracks/resolutions
             
             if state["found_link"]:
+                # Generates standard IPTV entry with User-Agent properties to prevent stream player mismatches
                 entry = (
                     f'#EXTINF:-1 tvg-id="" tvg-name="{display_name}" tvg-language="English" '
-                    f'tvg-logo="{full_logo_url}" group-title="XXX",{display_name}\n{state["found_link"]}'
+                    f'tvg-logo="{full_logo_url}" group-title="XXX",{display_name}\n'
+                    f'#EXTVLCOPT:http-user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0\n'
+                    f'{state["found_link"]}'
                 )
                 return entry
             else:
