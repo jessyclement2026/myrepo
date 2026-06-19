@@ -75,28 +75,24 @@ def fetch_stream_link(item):
         
         state = {"found_link": None}
 
-        # Custom inline handler to catch the exact full tokenized .m3u8 path
+        # Custom inline handler to catch the exact link containing wmsAuthSign
         def check_network(request):
             url = request.url
-            if "tvcdnpotok.com" in url and ".m3u8" in url:
-                # Regex extracts everything up to '.m3u8' dropping URL arguments
-                match = re.search(r'(https://tvcdnpotok\.com/.*?\.m3u8)', url)
+            if "tvcdnpotok.com" in url and "wmsAuthSign=" in url:
+                # Regex extracts the whole URL including the query parameters (?wmsAuthSign=...)
+                match = re.search(r'(https://tvcdnpotok\.com/.*?index\.m3u8\?wmsAuthSign=[a-zA-O0-9\-_]+)', url)
                 if match:
-                    clean_url = match.group(1)
-                    
-                    # VALIDATION: Check if this is the full token link. 
-                    # The short broken link has 4 slashes: https: // tvcdnpotok.com / 46 / index.m3u8
-                    # The full working link has 6 slashes: https: // tvcdnpotok.com / TOKEN / 46 / TIMESTAMP / index.m3u8
-                    if clean_url.count("/") >= 6:
-                        state["found_link"] = clean_url
-                        print(f"[FOUND LINK NOW] {display_name} -> {clean_url}")
+                    auth_url = match.group(1)
+                    if state["found_link"] is None:
+                        state["found_link"] = auth_url
+                        print(f"[FOUND AUTH LINK] {display_name} -> {auth_url}")
 
         page.on("request", check_network)
 
         try:
             print(f"[START] Processing: {display_name}")
             page.goto(full_url, timeout=20000)
-            page.wait_for_timeout(5000)  # Slightly increased to give the stream player time to resolve tokens
+            page.wait_for_timeout(4000)  # Wait for player to load and request stream
             
             if state["found_link"]:
                 entry = (
@@ -105,7 +101,7 @@ def fetch_stream_link(item):
                 )
                 return entry
             else:
-                print(f"[FAILED] No complete stream link found for {display_name}")
+                print(f"[FAILED] No auth stream link found for {display_name}")
                 return None
 
         except Exception as e:
@@ -132,7 +128,7 @@ def main():
         f.write("#EXTM3U\n")
         f.write("\n".join(playlist_entries))
 
-    print(f"\nFinished! Compiled {len(playlist_entries)} complete links inside playlist.m3u.")
+    print(f"\nFinished! Compiled {len(playlist_entries)} auth-sign links inside playlist.m3u.")
 
 if __name__ == "__main__":
     main()
