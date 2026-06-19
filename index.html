@@ -1,9 +1,176 @@
 <!DOCTYPE html>
-<html>
+<html lang='en' dir='ltr'>
+
 <head>
- <title>Hello World!</title>
+  <meta charset='utf-8'>
+  <title>IPTV HLS Pipeline Tester</title>
+  <meta name='viewport' content='width=device-width,initial-scale=1'>
+
+  <link href='https://sdk.uiza.io/v5/release/uiza.css' rel='stylesheet'>
+  <script src='https://sdk.uiza.io/v5/release/uiza.min.js'></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 30px;
+      background-color: #0b0c10;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 { color: #66fcf1; margin-bottom: 20px; font-size: 20px; }
+    #player-wrapper {
+      width: 800px;
+      height: 450px;
+      background: #000;
+      border: 2px solid #46a29f;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    #playerUz {
+      width: 100%;
+      height: 100%;
+    }
+    #controls {
+      margin-top: 20px;
+      width: 800px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    select {
+      flex-grow: 1;
+      padding: 10px;
+      background: #1f2833;
+      color: #fff;
+      border: 1px solid #46a29f;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #console {
+      margin-top: 15px;
+      width: 760px;
+      font-size: 13px;
+      color: #c5a3ff;
+      background: #151515;
+      padding: 12px 20px;
+      border-radius: 4px;
+      border-left: 4px solid #46a29f;
+      font-family: monospace;
+    }
+  </style>
 </head>
+
 <body>
-<h1>Hello World!</h1>
+
+  <h1>IPTV Pipeline Test Frame (UIZA SDK)</h1>
+
+  <div id="player-wrapper">
+    <video id='playerUz' crossorigin playsinline autoplay></video>
+  </div>
+
+  <div id="controls">
+    <label for="channelSelect">Select Channel:</label>
+    <select id="channelSelect" disabled>
+      <option>Loading and parsing playlist.m3u...</option>
+    </select>
+  </div>
+
+  <div id="console">Initializing parser components...</div>
+
+  <script>
+    // Hardcoded example link provided in original request preserved as fallback
+    var videoStreamURL = 'https://cdn77.org';
+    let channelsList = [];
+
+    function parseM3u(text) {
+      const lines = text.split('\n');
+      const parsed = [];
+      let currentName = "Default Channel";
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith('#EXTINF:')) {
+          const commaIdx = line.lastIndexOf(',');
+          if (commaIdx !== -1) {
+            currentName = line.substring(commaIdx + 1).trim();
+          }
+        } else if (line.startsWith('http')) {
+          parsed.push({
+            name: currentName,
+            url: line
+          });
+        }
+      }
+      return parsed;
+    }
+
+    function playStream(streamURL) {
+      const log = document.getElementById('console');
+      log.innerText = `[PLAYING] Accessing stream URL: ${streamURL}`;
+      
+      if (window.UZplayer) {
+        window.UZplayer.src(streamURL);
+      } else {
+        // Preserved original execution design using Uiza class instantiations
+        window.UZplayer = new Uiza(document.getElementById('playerUz'), { src: streamURL });
+      }
+    }
+
+    async function initTestingSuite() {
+      const log = document.getElementById('console');
+      const selectMenu = document.getElementById('channelSelect');
+
+      try {
+        log.innerText = "[CORE] Fetching local playlist.m3u relative asset...";
+        
+        const response = await fetch('./playlist.m3u');
+        if (!response.ok) {
+          log.innerHTML = "<span style='color:#ff4a4a;'>[FALLBACK] local playlist.m3u missing. Running hardcoded default test stream.</span>";
+          playStream(videoStreamURL);
+          return;
+        }
+
+        const rawText = await response.text();
+        channelsList = parseM3u(rawText);
+
+        if (channelsList.length === 0) {
+          log.innerHTML = "<span style='color:#ff4a4a;'>[EMPTY] File found but contains no track lines. Playing default stream.</span>";
+          playStream(videoStreamURL);
+          return;
+        }
+
+        // Clear placeholder items and populate with active parsed channels
+        selectMenu.innerHTML = "";
+        channelsList.forEach((channel, idx) => {
+          const opt = document.createElement('option');
+          opt.value = idx;
+          opt.innerText = channel.name;
+          selectMenu.appendChild(opt);
+        });
+        selectMenu.disabled = false;
+
+        log.innerHTML = `<span style='color:#66fcf1;'>[SUCCESS] Parsed ${channelsList.length} channels. Playing track 1.</span>`;
+        playStream(channelsList[0].url);
+
+        selectMenu.addEventListener('change', (e) => {
+          const selectedIdx = e.target.value;
+          playStream(channelsList[selectedIdx].url);
+        });
+
+      } catch (err) {
+        console.error(err);
+        log.innerHTML = `<span style='color:#ff4a4a;'>[ERROR] Fallback to default asset due to: ${err.message}</span>`;
+        playStream(videoStreamURL);
+      }
+    }
+
+    window.onload = initTestingSuite;
+  </script>
+
 </body>
+
 </html>
