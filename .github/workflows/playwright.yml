@@ -1,22 +1,19 @@
-name: Generate and Deploy IPTV Playlist
+name: Generate and Update IPTV Playlist
 
 on:
   push:
     branches: [ main, master ]
   schedule:
-    # Automatically updates your tokens every 6 hours
+    # Runs automatically every 6 hours to update tokens
     - cron: '0 */6 * * *'
   workflow_dispatch:
-    # Allows you to manually trigger the script using the "Run workflow" button
+    # Allows you to manually click "Run workflow" inside GitHub
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages and repo writes
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
-  scrape-and-deploy:
+  scrape-and-update:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
@@ -37,23 +34,13 @@ jobs:
       run: playwright install firefox --with-deps
 
     - name: Run Scraper Script
-      # Adjust "app.py" if your python file has a different name
+      # Adjust "app.py" if your script file has a different name
       run: python app.py
 
-    - name: Commit and Push Updated Playlist
+    - name: Commit and Push Updated Playlist to Main
       run: |
         git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@://github.com"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git add playlist.m3u
-        # Only commit if the file actually changed, avoiding workflow errors
+        # Only commits and pushes if tokens have actually changed
         git diff-index --quiet HEAD || (git commit -m "Automated token update" && git push)
-
-    - name: Upload Artifact for GitHub Pages
-      uses: actions/upload-pages-artifact@v3
-      with:
-        # Uploads the root directory containing your playlist.m3u
-        path: '.'
-
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
