@@ -17,11 +17,10 @@ jobs:
     timeout-minutes: 25
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.13'
 
@@ -30,19 +29,16 @@ jobs:
         python -m pip install --upgrade pip
         pip install playwright
 
-    - name: Ensure Firefox is installed
-      run: playwright install firefox --with-deps
+    - name: Ensure browsers are installed
+      run: python -m playwright install firefox --with-deps
 
-    - name: Install Multimedia Codecs and Utilities
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg ubuntu-restricted-extras xvfb
-
-    - name: Run Scraper Script with Virtual Display Framebuffer
-      run: |
-        xvfb-run --server-args="-screen 0 1920x1080x24" python app.py
+    - name: Run Scraper Script
+      run: python app.py
 
     - name: Commit and Push Updated Playlist to Main
       run: |
         git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@://
+        git config --global user.email "41898282+github-actions[bot]@://github.com"
+        git add playlist.m3u
+        # Only commits and pushes if tokens have actually changed
+        git diff-index --quiet HEAD || (git commit -m "Automated token update" && git push)
