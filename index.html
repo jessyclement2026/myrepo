@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GitHub Pages IPTV Live Tester</title>
   
-  <!-- Load the Clappr Video Engine Core via official stable CDN delivery layers -->
-  <script src="https://www.draketo.de/software/m3u-player.js" defer="defer"></script>
-  
+  <!-- FIXED: Consolidated absolute monolithic Clappr distribution path containing all HLS video layers -->
+  <script src=" https://cdn.jsdelivr.net/npm/clappr@0.3.13/dist/clappr.min.js "></script>
+  <link href=" https://cdn.jsdelivr.net/npm/clappr@0.3.13/src/components/core/public/fonts.min.css " rel="stylesheet">
 
   <style>
     body {
@@ -123,19 +123,13 @@
         playerInstance.destroy();
       }
 
-      // Generating the target player container mapping configurations
+      // FIXED: Using standard built-in monolithic Clappr initialization structures
       playerInstance = new Clappr.Player({
         source: streamURL,
         parentId: "#player",
         width: '100%',
         height: '100%',
-        autoPlay: true,
-        plugins: [ClapprPlugins.HlsPlayback],
-        playback: {
-          hlsjsConfig: {
-            enableWorker: true
-          }
-        }
+        autoPlay: true
       });
     }
 
