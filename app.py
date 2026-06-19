@@ -94,7 +94,7 @@ def fetch_stream_link(item):
 
         try:
             print(f"[START] Processing: {display_name}")
-            page.goto(full_url, timeout=20000)
+            page.goto(f"{full_url}?t={int(time.time())}", timeout=20000)
             page.wait_for_timeout(6000)  # Increased slightly to give the player time to request sub-tracks/resolutions
             
             if state["found_link"]:
