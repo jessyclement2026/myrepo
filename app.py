@@ -74,29 +74,29 @@ def fetch_stream_link(item):
         
         state = {"found_link": None}
 
-        # Inline handler targeting the required m3u8 token structure
+        # Custom inline handler to catch clean, tokenless paths
         def check_network(request):
             url = request.url
-            if ".m3u8" in url and "wmsAuthSign=" in url:
-                state["found_link"] = url
+            if ".m3u8" in url and "tvcdnpotok.com" in url:
+                # FIXED: Splitting the string and grabbing index 0 converts it to a clean string ending in .m3u8
+                state["found_link"] = url.split("?")[0]
 
         page.on("request", check_network)
 
         try:
             print(f"[START] Processing: {display_name}")
             page.goto(full_url, timeout=20000)
-            page.wait_for_timeout(4000)  # Wait for player to load and request token
+            page.wait_for_timeout(4000)  # Wait for player to load and request stream
             
             if state["found_link"]:
-                print(f"[SUCCESS] Found verified token link for {display_name}")
-                # Formats the entry cleanly as a pure string (no brackets or split arrays)
+                print(f"[SUCCESS] Found clean link for {display_name}")
                 entry = (
                     f'#EXTINF:-1 tvg-id="" tvg-name="{display_name}" tvg-language="English" '
                     f'tvg-logo="{full_logo_url}" group-title="XXX",{display_name}\n{state["found_link"]}'
                 )
                 return entry
             else:
-                print(f"[FAILED] No token link found for {display_name}")
+                print(f"[FAILED] No stream link found for {display_name}")
                 return None
 
         except Exception as e:
@@ -123,7 +123,7 @@ def main():
         f.write("#EXTM3U\n")
         f.write("\n".join(playlist_entries))
 
-    print(f"\nFinished! Compiled {len(playlist_entries)} token links inside playlist.m3u.")
+    print(f"\nFinished! Compiled {len(playlist_entries)} tokenless links inside playlist.m3u.")
 
 if __name__ == "__main__":
     main()
