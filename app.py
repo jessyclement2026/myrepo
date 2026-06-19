@@ -102,7 +102,6 @@ def fetch_stream_link(item):
                 entry = (
                     f'#EXTINF:-1 tvg-id="" tvg-name="{display_name}" tvg-language="English" '
                     f'tvg-logo="{full_logo_url}" group-title="XXX",{display_name}\n'
-                    f'#EXTVLCOPT:http-user-agent=Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0\n'
                     f'{state["found_link"]}'
                 )
                 return entry
