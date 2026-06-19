@@ -1,11 +1,11 @@
-name: Generate and Update list
+name: Generate and Update IPTV Playlist
 
 on:
   push:
     branches: [ main, master ]
   schedule:
-    # Runs automatically every 5 minutes
-    - cron: '*/5 * * * *'
+    # Runs automatically every 30 minutes
+    - cron: '*/30 * * * *'
   workflow_dispatch:
     # Allows you to manually click "Run workflow" inside GitHub
 
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   scrape-and-update:
-    timeout-minutes: 15
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repository
@@ -28,13 +28,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install playwright
+        pip install playwright requests
 
     - name: Ensure Firefox is installed
       run: playwright install firefox --with-deps
 
     - name: Run Scraper Script
-      # Adjust "app.py" if your script file has a different name
       run: python app.py
 
     - name: Commit and Push Updated Playlist to Main
@@ -42,5 +41,4 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@://github.com"
         git add playlist.m3u
-        # Only commits and pushes if tokens have actually changed
         git diff-index --quiet HEAD || (git commit -m "Automated token update" && git push)
