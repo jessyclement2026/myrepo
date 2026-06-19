@@ -2,7 +2,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from playwright.sync_api import sync_playwright
 
-BASE_URL = "https://hotelki.tv"
+BASE_URL = "https://hotelki.tv/"
 
 pages = [
     "hustler-hd.html", "private-tv.html", "brazzers-tv-europe.html", "babes-tv.html",
