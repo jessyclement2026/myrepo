@@ -3,11 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GitHub Pages IPTV Live Tester</title>
+  <title>Manual IPTV Stream Tester</title>
   
-  <!-- FIXED: Consolidated absolute monolithic Clappr distribution path containing all HLS video layers -->
-  <script src=" https://cdn.jsdelivr.net/npm/clappr@0.3.13/dist/clappr.min.js "></script>
-  <link href=" https://cdn.jsdelivr.net/npm/clappr@0.3.13/src/components/core/public/fonts.min.css " rel="stylesheet">
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
 
   <style>
     body {
@@ -37,10 +35,10 @@
       margin-top: 20px;
       width: 800px;
       display: flex;
-      gap: 15px;
+      gap: 10px;
       align-items: center;
     }
-    select {
+    input[type="text"] {
       flex-grow: 1;
       padding: 12px;
       background: #1f2833;
@@ -48,9 +46,21 @@
       border: 1px solid #46a29f;
       border-radius: 4px;
       font-size: 14px;
-      cursor: pointer;
     }
-    select:focus { outline: none; border-color: #66fcf1; }
+    input[type="text"]:focus { outline: none; border-color: #66fcf1; }
+    
+    button {
+      padding: 12px 24px;
+      background: #46a29f;
+      color: #0b0c10;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #66fcf1; }
     
     #console {
       margin-top: 15px;
@@ -62,70 +72,47 @@
       border-radius: 4px;
       border-left: 4px solid #66fcf1;
       font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
     }
   </style>
 </head>
 <body>
 
-  <h1>IPTV Live Stream Pipeline Tester</h1>
-  <p class="sub">Verifying GitHub Actions Extracted M3U8 Tokens inside Clappr Video Core</p>
+  <h1>Manual IPTV HLS Stream Tester</h1>
+  <p class="sub">Paste any live .m3u8 link directly into the input bar to verify playback</p>
 
-  <!-- Video canvas container target binding space -->
   <div id="player-wrapper">
     <div id="player"></div>
   </div>
 
-  <!-- Channel navigation stream dropdown module selector -->
   <div id="controls">
-    <label for="channelSelect">Select Track:</label>
-    <select id="channelSelect" disabled>
-      <option>Loading and parsing playlist.m3u asset matrix...</option>
-    </select>
+    <input type="text" id="streamInput" placeholder="Paste your https://.../index.m3u8 link here">
+    <button id="playBtn">Play Stream Now</button>
   </div>
 
-  <div id="console">System Boot: Initializing stream mapping components...</div>
+  <div id="console">System Ready: Input an active stream link destination to connect to the video grid...</div>
 
   <script type="text/javascript">
-    // Pristine, permanent fallback video URL signature asset provided by Apple CDN networks
-    var backupTestURL = 'https://unified-streaming.com';
-    let channelsList = [];
+    var defaultTestURL = 'https://unified-streaming.com';
     let playerInstance = null;
 
-    // Fast memory processing parser function mapping plain layout text layers to valid track array objects
-    function parseM3uFile(text) {
-      const lines = text.split('\n');
-      const tracks = [];
-      let currentName = "Default Channel";
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line.startsWith('#EXTINF:')) {
-          const commaIdx = line.lastIndexOf(',');
-          if (commaIdx !== -1) {
-            currentName = line.substring(commaIdx + 1).trim();
-          }
-        } else if (line.startsWith('http')) {
-          tracks.push({
-            name: currentName,
-            url: line
-          });
-        }
-      }
-      return tracks;
-    }
-
-    // Instantiates the native Clappr HLS player lifecycle engine
     function loadVideoTrack(streamURL) {
       const log = document.getElementById('console');
-      log.innerText = `[CORE] Connecting to stream source payload: ${streamURL}`;
+      
+      if (!streamURL || !streamURL.trim().startsWith('http')) {
+        log.innerHTML = "<span style='color:#ff4a4a;'>[ERROR] Invalid URL format. Link must start with http:// or https://</span>";
+        return;
+      }
+
+      log.innerText = `[CORE] Connecting to stream source payload: \n${streamURL}`;
       
       if (playerInstance) {
         playerInstance.destroy();
       }
 
-      // FIXED: Using standard built-in monolithic Clappr initialization structures
       playerInstance = new Clappr.Player({
-        source: streamURL,
+        source: streamURL.trim(),
         parentId: "#player",
         width: '100%',
         height: '100%',
@@ -133,57 +120,25 @@
       });
     }
 
-    async function startTestingSuite() {
-      const log = document.getElementById('console');
-      const selectMenu = document.getElementById('channelSelect');
+    function initTestingSuite() {
+      const streamInput = document.getElementById('streamInput');
+      const playBtn = document.getElementById('playBtn');
 
-      try {
-        log.innerText = "[CORE] Locating playlist.m3u database from repository tree...";
-        
-        // Fetching the runtime file compiled dynamically by your GitHub workflow script
-        const response = await fetch('./playlist.m3u');
-        if (!response.ok) {
-          log.innerHTML = "<span style='color:#ff4a4a;'>[FALLBACK] local playlist.m3u missing. Running static test stream.</span>";
-          loadVideoTrack(backupTestURL);
-          return;
+      streamInput.value = defaultTestURL;
+      loadVideoTrack(defaultTestURL);
+
+      playBtn.addEventListener('click', () => {
+        loadVideoTrack(streamInput.value);
+      });
+
+      streamInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          loadVideoTrack(streamInput.value);
         }
-
-        const rawText = await response.text();
-        channelsList = parseM3uFile(rawText);
-
-        if (channelsList.length === 0) {
-          log.innerHTML = "<span style='color:#ff4a4a;'>[EMPTY] Playlist parsed but 0 streams found. Playing backup stream.</span>";
-          loadVideoTrack(backupTestURL);
-          return;
-        }
-
-        // Flush placeholders and drop options directly into select menus
-        selectMenu.innerHTML = "";
-        channelsList.forEach((channel, idx) => {
-          const opt = document.createElement('option');
-          opt.value = idx;
-          opt.innerText = channel.name;
-          selectMenu.appendChild(opt);
-        });
-        selectMenu.disabled = false;
-
-        log.innerHTML = `<span style='color:#66fcf1;'>[SUCCESS] Successfully verified and parsed ${channelsList.length} live tracks. Launching track 1.</span>`;
-        loadVideoTrack(channelsList[0].url);
-
-        // Track changes on dropdown selection hooks
-        selectMenu.addEventListener('change', (e) => {
-          const selectedIdx = e.target.value;
-          loadVideoTrack(channelsList[selectedIdx].url);
-        });
-
-      } catch (err) {
-        console.error(err);
-        log.innerHTML = `<span style='color:#ff4a4a;'>[ERROR] Critical exception: ${err.message}</span>`;
-        loadVideoTrack(backupTestURL);
-      }
+      });
     }
 
-    window.onload = startTestingSuite;
+    window.onload = initTestingSuite;
   </script>
 
 </body>
