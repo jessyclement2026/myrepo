@@ -1,5 +1,5 @@
 #EXTM3U
-#EXTINF:-1 tvg-id="Cartoon Network USA" tvg-logo="https://toppng.com/uploads/preview/cartoon-network-cartoons-shopping-logo-nickelodeon-indian-tv-channel-logo-115635448726rzkpn0ein.png" group-title="Animation;Kids",Cartoon Network USA
+#EXTINF:-1 tvg-id="Cartoon Network USA" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/250px-Cartoon_Network_2010_logo.svg.png" group-title="Animation;Kids",Cartoon Network USA
 https://23.237.104.106:8080/USA_CARTOON_NETWORK/index.m3u8
 #EXTINF:-1 tvg-id="Boomerang USA" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Boomerang_2014_logo.svg/250px-Boomerang_2014_logo.svg.png" group-title="Animation;Kids",Boomerang USA
 https://23.237.104.106:8080/USA_BOOMERANG/index.m3u8
